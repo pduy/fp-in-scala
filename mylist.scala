@@ -53,13 +53,13 @@ object List {
     case Nil => l2
     case Cons(x, xs) => Cons(x, append(xs, l2)) }
 
-  def foldRight[A, B](as: List[A], z: B)(f: (A, B) => B): B = {
-    println(z)
-    as match {
-      case Nil => z
-      case Cons(x, xs) => f(x, foldRight(xs, z)(f))
-    }
-  }
+  //def foldRight[A, B](as: List[A], z: B)(f: (A, B) => B): B = {
+    //println(z)
+    //as match {
+      //case Nil => z
+      //case Cons(x, xs) => f(x, foldRight(xs, z)(f))
+    //}
+  //}
 
   def length[A](as: List[A]): Int = foldRight(as, 0)((_, x) => x + 1)
 
@@ -71,32 +71,38 @@ object List {
     }
   }
 
+  def foldRight[A, B](as: List[A], z: B)(f: (A, B) => B): B = {
+    foldLeft(as, (b: B) => b)((g, a) => (b: B) => g(f(a, b)))(z)
+  }
+
   def reverse[A](as: List[A]): List[A] = 
     foldLeft[A, List[A]](as, List())((xs, a) => Cons(a, xs))
 
-  def foldLeftFromFoldRight[A, B](as: List[A], z: B)(f: (B, A) => B): B = 
-    foldRight(as, z)((a, b) => f(b, a))
+  //def foldLeftFromFoldRight[A, B](as: List[A], z: B)(f: (B, A) => B): B = 
+    //foldRight(as, ())((a, b) => f(b, a))
 
-  def foldRightFromFoldLeft[A, B](as: List[A], z: B)(f: (A, B) => B): B =
-    foldLeft(as, z)((b, a) => f(a, b))
+  //def foldRightFromFoldLeft[A, B](as: List[A], z: B)(f: (A, B) => B): B = {
+    //val reversed = List.foldLeft[A, List[A]](as, Nil)((xs, a) => Cons(a, xs))
+    //reversed match {
+      //case Nil => z
+      //case Cons(x, xs) => f(x, foldRight(xs, z)(f))
+    //}
+  //}
 
   def appendUsingFold[A](l1: List[A], l2: List[A]): List[A] = 
     foldRight[A, List[A]](l1, List())((a, xs) => Cons(a, xs))
 
-  def map[A, B](as: List[A])(f: A => B): List[B] = as match {
-    case Nil => Nil
-    case Cons(x, xs) => Cons(f(x), map(xs)(f))
-  }
+  def concat[A](asList: List[List[A]]): List[A] = 
+    foldLeft[List[A], List[A]](asList, List())((xs, as) => append(xs, as))
 
-  def filter[A](as: List[A])(f: A => Boolean): List[A] = as match {
-    case Nil => Nil
-    case Cons(x, xs) => if(f(x)) Cons(x, filter(xs)(f)) else filter(xs)(f)
-  }
+  def map[A, B](as: List[A])(f: A => B): List[B] = 
+    foldRight(as, Nil: List[B])((a, bs) => Cons(f(a), bs))
+
+  def filter[A](as: List[A])(f: A => Boolean): List[A] = 
+    foldRight(as, Nil: List[A])((a, as) => if(f(a)) Cons(a, as) else as)
     
-  def flatMap[A, B](as: List[A])(f: A => List[B]): List[B] = as match {
-    case Nil => Nil
-    case Cons(x, xs) => append(f(x), flatMap(xs)(f))
-  }
+  def flatMap[A, B](as: List[A])(f: A => List[B]): List[B] = 
+    foldRight(as, Nil: List[B])((a, bs) => append(f(a), bs))
 
   def elementWiseSum(l1: List[Int], l2: List[Int]): List[Int] = l1 match {
     case Nil => Nil
@@ -107,7 +113,13 @@ object List {
   }
 
   def zipWith[A, B](l1: List[A], l2: List[A])(f: (A, A) => B): List[B] = (l1, l2) match {
-    case (Cons(x1, xs1), Cons(x2, xs2)) => Cons(f(x1, x2), zipWith(xs1, xs2))
+    case (Cons(x1, xs1), Cons(x2, xs2)) => Cons(f(x1, x2), zipWith(xs1, xs2)(f))
     case _ => Nil
+  }
+
+  def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = {
+    def isIn(a: A, as: List[A]) = foldRight(as, false)((x, b) => (a == x) || b)
+    val isIns = map(sub)(x => isIn(x, sup))
+    foldLeft(isIns, true)(_ && _)
   }
 }
