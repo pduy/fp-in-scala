@@ -23,19 +23,18 @@ object Tree {
     case Branch(left, right) => Branch(map(left)(f), map(right)(f))
   }
 
-  def fold[A, B](t: Tree[A], z: B)(f1: (A, B) => B)(f2: (B, B) => B): B = {
-    println(z)
+  def fold[A, B](t: Tree[A])(f1: A => B)(f2: (B, B) => B): B = {
     t match {
-      case Leaf(a) => f1(a, z)
-      case Branch(left, right) => f2(fold(left, z)(f1)(f2), fold(right, z)(f1)(f2))
+      case Leaf(a) => f1(a)
+      case Branch(left, right) => f2(fold(left)(f1)(f2), fold(right)(f1)(f2))
     }
   }
 
-  def sizeUsingFold[A](t: Tree[A]): Int = fold(t, 0)((_, i) => i + 1)(_ + _)
+  def sizeUsingFold[A](t: Tree[A]): Int = fold(t)(a => 1)(_ + _)
 
-  def maxUsingFold(t: Tree[Int]): Int = fold(t, 0)(_ max _)(_ max _)
+  def maxUsingFold(t: Tree[Int]): Int = fold(t)(i => i)(_ max _)
 
-  def depthUsingFold[A](t: Tree[A]): Int = fold(t, 0)((_, i) => 1)(_ max _ + 1)
+  def depthUsingFold[A](t: Tree[A]): Int = fold(t)(a => 0)((d1, d2) => 1 + (d1 max d2))
 
-  def mapUsingFold[A](t: Tree[A])(f: A => B): Tree[B] = fold(t, Nil)((a, bs) => Leaf(f(a)))()
+  def mapUsingFold[A, B](t: Tree[A])(f: A => B): Tree[B] = fold(t)(a => Leaf(f(a)): Tree[B])(Branch(_, _))
 }
