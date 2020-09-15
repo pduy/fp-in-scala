@@ -1,3 +1,6 @@
 .metals
 project
 target
+.bloop
+.vim
+
