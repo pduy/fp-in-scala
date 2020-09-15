@@ -3,40 +3,31 @@ package fpinscala.errorhandling
 
 sealed trait Option[+A] {
   def map[B](f: A => B): Option[B] = this match {
-    case None => None // ????
-    case Some(a) => Some(f(a)) // ????
+    case None => None
+    case Some(a) => Some(f(a))
   }
-
-  def flatMap[B](f: A => Option[B]): Option[B] = map(f).getOrElse(None)
-
-  def map[B](f: A => B): Option[B] = flatMap(f compose Some)
 
   def getOrElse[B >: A](default: => B): B = this match {
     case None => default
     case Some(a) => a
   }
 
-  def flatMap[B](f: A => Option[B]): Option[B]
-  def orElse[B >: A](ob: => Option[B]): Option[B] = map(a => ob)
-
-  def filter(f: A => Boolean): Option[A]
-}
-
-case object None extends Option[Nothing] {
-  def map[B](f: Nothing => B): Option[B] = None
-  def getOrElse[B >: Nothing](default: => B): B = default
-  def flatMap[B](f: Nothing => Option[B]): Option[B] = None
-  def orElse[B >: Nothing](ob: => Option[B]): Option[B] = ob
-  def filter(f: Nothing => Boolean): Option[Nothing] = None
-}
-
-case class Some[+A](get: A) extends Option[A] {
-  def map[B](f: A => B): Option[B] = Some(f(get))
-  def getOrElse[B >: A](default: => B): B = get
   def flatMap[B](f: A => Option[B]): Option[B] = map(f).getOrElse(None)
-  def orElse[B >: A](ob: => Option[B]): Option[B] = this
-  def filter(f: A => Boolean): Option[A] = if (f(get)) this else None
+
+  def orElse[B >: A](ob: => Option[B]): Option[B] =  this match {
+    case None => ob
+    case Some(a) => this
+  }
+
+  def filter(f: A => Boolean): Option[A] = this match {
+    case None => None
+    case Some(a) => if (f(a)) this else None
+  }
 }
+
+case object None extends Option[Nothing]
+
+case class Some[+A](get: A) extends Option[A] 
 
 
 object Option {
