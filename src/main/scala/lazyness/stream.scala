@@ -145,7 +145,7 @@ object Stream {
 
   //def constant[A](a: A): Stream[A] = unfold(142)(_ => Some((a, 142)))
 
-  def ones = coni(1)
+  def ones = constant(1)
 
   def from(n: Int): Stream[Int] = unfold(n)(s => Some((s, s + 1)))
 
