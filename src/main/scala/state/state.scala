@@ -13,8 +13,25 @@ case class SimpleRNG(seed: Long) extends RNG {
   }
 }
 
+
+case class State[S, +A](run: S => (A, S)) {
+  def map[B](s: S[A])(f: A => B): State[S, B] = State{
+    s => 
+      val (a, s1) = run(s)
+      (s1, f(a))
+  }
+
+  def flatMap[A, B](g: A => State[S, B]): State[S, B] = State{
+    s =>
+      val (a, s1) = run(s)
+      g(a).run(s1)
+  }
+}
+
+
 object State {
   type Rand[+A] = RNG => (A, RNG)
+  type State[S, +A] = S => (A, S)
 
   def nonNegativeInt(rng: RNG): (Int, RNG) = {
     val (i, nextRNG) = rng.nextInt
@@ -47,8 +64,8 @@ object State {
     (generatedInts, xs.last._2)
   }
 
-  def unit[A](a: A): Rand[A] =
-    rng => (a, rng)
+  def unit[S, A](a: A): State[S, A] =
+    s => (a, s)
 
   def map[A, B](s: Rand[A])(f: A => B): Rand[B] =
     rng => {
@@ -59,12 +76,19 @@ object State {
   def nonNegativeEven: Rand[Int] =
     map(nonNegativeInt)(i => i - i % 2)
 
-  def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
-  rng => {
-    val (a, arng) = ra(rng)
-    val (b, brng) = rb(arng)
-    (f(a, b), brng)
-  }
+  //def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
+  //rng => {
+    //val (a, arng) = ra(rng)
+    //val (b, brng) = rb(arng)
+    //(f(a, b), brng)
+  //}
+
+  def map2[A, B, C](sa: State[S, A], sb: State[S, B])(f: (A, B) => C): State[S, C] =
+    s => {
+      val (a, s1) = sa.run()
+      val (b, s2) = sa.run()
+      (f(a, b), s2)
+    }
 
   def both[A, B](ra: Rand[A], rb: Rand[B]): Rand[(A, B)] =
     map2(ra, rb)((_, _))
